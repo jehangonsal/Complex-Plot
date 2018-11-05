@@ -1,0 +1,46 @@
+
+
+### Create complex plot with ggplot
+
+library(tidyverse)
+library(plotrix)
+
+mtcars %>% 
+  mutate(am = as.factor(am)) %>%
+  group_by(am) %>%
+  summarise(mean_wt = mean(wt), upper = mean_wt + 1.96*std.error(wt), lower = mean_wt - 1.96*std.error(wt)) %>%
+  ggplot() + 
+  geom_errorbar(aes(x = am, ymax = upper, ymin  = lower),colour = "dark blue", width = .2, size = .8) + 
+  geom_pointrange(aes(x = am, y = mean_wt, ymax = upper, ymin  = lower), colour = "dark blue") +
+  theme_bw() +
+  scale_y_continuous(limits = c(0,6)) +
+  geom_point(data = 
+               mtcars %>% 
+               mutate(am = as.factor(am)),
+               mapping = aes(x = am, y = wt)
+               , alpha = .4)  +
+  geom_violin(data = 
+               mtcars %>% 
+               mutate(am = as.factor(am)),
+             mapping = aes(x = am, y = wt)
+             , fill = "light blue", alpha = .3, colour = "white") +
+  labs(title = "Car Weight by Transmission Type", subtitle = "Error bars indicate 95% confidence intervals",
+       x = "Transmission type", y = "Car Weight",
+       caption = "Dots indicate data points whereas violin 
+       plot shows overall distribution") +
+  scale_x_discrete(labels = c("Automatic", "Manual"))
+
+### Try again with density plots. This just looks terrible. 
+
+mtcars %>% 
+  mutate(am = as.factor(am)) %>%
+  ggplot() +
+  geom_density(aes(wt, fill = am), alpha = .1) +
+  theme_bw() +
+  scale_fill_manual(values = c("dark blue", "dark green")) +
+  geom_vline(data = mtcars %>% group_by(am) %>% summarise(mean = mean(wt)), 
+             aes(xintercept = mean), colour = "dark blue", alpha = .8, linetype = 2, size = .8) +
+  geom_rect(data = mtcars %>% 
+                 group_by(am) %>% 
+                 summarise(upper = mean(wt) + 1.96*std.error(wt), lower = mean(wt) - 1.96*std.error(wt)), 
+               aes(xmin = lower, xmax = upper, ymin=0, ymax=Inf), fill = "light blue", alpha = .4)
